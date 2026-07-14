@@ -31,18 +31,54 @@ def parse_command_args() -> object:
     return args
 
 def percent_to_graph(percent: float, length: int=20) -> str:
-    "turns a percent 0.0 - 1.0 into a bar graph"
-    pass
+    """
+    Turns a percent 0.0 - 1.0 into a bar graph string.
+    
+    The graph is made of '#' characters representing the percentage
+    and spaces filling the remainder. The total length of the string
+    always equals the length argument.
+    """
+    num_hashes = round(percent * length)
+    num_spaces = length - num_hashes
+    return '#' * num_hashes + ' ' * num_spaces
 
 def get_sys_mem() -> int:
-    "return total system memory (used or available) in kB"
-    # open the meminfo file to do this!
-    pass
+    """
+    Return total system memory in kB.
+    
+    Opens /proc/meminfo, finds the MemTotal line, and returns
+    the numeric value as an integer.
+    """
+    with open('/proc/meminfo', 'r') as f:
+        for line in f:
+            if line.startswith('MemTotal:'):
+                return int(line.split()[1])
+    return 0
 
 def get_avail_mem() -> int:
-    "return total memory that is currently available"
-    # open the meminfo file to do this!
-    pass
+    """
+    Return total memory that is currently available in kB.
+    
+    Opens /proc/meminfo and looks for MemAvailable.
+    If MemAvailable is missing (common on WSL), it falls back to
+    MemFree + SwapFree.
+    """
+    mem_free = 0
+    swap_free = 0
+    mem_available = None
+    
+    with open('/proc/meminfo', 'r') as f:
+        for line in f:
+            if line.startswith('MemAvailable:'):
+                mem_available = int(line.split()[1])
+            elif line.startswith('MemFree:'):
+                mem_free = int(line.split()[1])
+            elif line.startswith('SwapFree:'):
+                swap_free = int(line.split()[1])
+    
+    if mem_available is not None:
+        return mem_available
+    return mem_free + swap_free
 
 def pids_of_prog(app_name: str) -> list:
     "given an app name, return all pids associated with app"
