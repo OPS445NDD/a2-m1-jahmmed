@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
 
 '''
-OPS445 Assignment 2 - Winter 2023
+OPS445 Assignment 2 - Fall 2025
 Program: assignment2.py 
-Author: "Student Name"
+Author: "jahmmed"
 The python code in this file is original work written by
-"Student Name". No code in this file is copied from any other source 
+"jahmmed". No code in this file is copied from any other source 
 except those provided by the course instructor, including any person, 
 textbook, or on-line resource. I have not shared this python script 
 with anyone or anything except for submission for grading.  
 I understand that the Academic Honesty Policy will be enforced and 
 violators will be reported and appropriate action will be taken.
 
-Description: <Enter your documentation here>
+Description: This script displays system memory usage and per-process
+RSS memory using bar graphs. It reads from /proc/meminfo and /proc/PID/smaps.
 
-Date: 
-
+Date: 2026-07-14
 '''
 
 import argparse
@@ -38,8 +38,11 @@ def percent_to_graph(percent: float, length: int=20) -> str:
     and spaces filling the remainder. The total length of the string
     always equals the length argument.
     """
+    # Calculate number of hash symbols from the percentage
     num_hashes = round(percent * length)
+    # Remaining characters are spaces
     num_spaces = length - num_hashes
+    # Build and return the bar graph string
     return '#' * num_hashes + ' ' * num_spaces
 
 def get_sys_mem() -> int:
@@ -49,10 +52,14 @@ def get_sys_mem() -> int:
     Opens /proc/meminfo, finds the MemTotal line, and returns
     the numeric value as an integer.
     """
+    # Open the system memory info file in read mode
     with open('/proc/meminfo', 'r') as f:
+        # Iterate through each line to find MemTotal
         for line in f:
             if line.startswith('MemTotal:'):
+                # Extract the numeric value and convert to int
                 return int(line.split()[1])
+    # Return 0 if MemTotal is not found
     return 0
 
 def get_avail_mem() -> int:
@@ -67,15 +74,20 @@ def get_avail_mem() -> int:
     swap_free = 0
     mem_available = None
     
+    # Open the system memory info file in read mode
     with open('/proc/meminfo', 'r') as f:
         for line in f:
+            # Check for MemAvailable first (preferred value)
             if line.startswith('MemAvailable:'):
                 mem_available = int(line.split()[1])
+            # Store MemFree in case we need the fallback
             elif line.startswith('MemFree:'):
                 mem_free = int(line.split()[1])
+            # Store SwapFree in case we need the fallback
             elif line.startswith('SwapFree:'):
                 swap_free = int(line.split()[1])
     
+    # Return MemAvailable if it exists, otherwise use the WSL fallback
     if mem_available is not None:
         return mem_available
     return mem_free + swap_free
@@ -106,6 +118,11 @@ def bytes_to_human_r(kibibytes: int, decimal_places: int=2) -> str:
 if __name__ == "__main__":
     args = parse_command_args()
     if not args.program:  # not program name is specified.
-        pass
+        total = get_sys_mem()
+        avail = get_avail_mem()
+        used = total - avail
+        percent = used / total
+        graph = percent_to_graph(percent, args.length)
+        print(f"Memory         [{graph}| {percent:.0%}] {used}/{total}")
     else:
         pass
