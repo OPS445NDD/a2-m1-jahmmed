@@ -24,6 +24,7 @@ import os, sys
 def parse_command_args() -> object:
     "Set up argparse here. Call this function inside main."
     parser = argparse.ArgumentParser(description="Memory Visualiser -- See Memory Usage Report with bar charts",epilog="Copyright 2023")
+    parser.add_argument("-H", "--human-readable", action="store_true", help="Prints sizes in human readable format")
     parser.add_argument("-l", "--length", type=int, default=20, help="Specify the length of the graph. Default is 20.")
     parser.add_argument("program", type=str, nargs='?', help="if a program is specified, show memory use of all associated processes. Show only total use if not.")
     args = parser.parse_args()
@@ -92,12 +93,39 @@ def get_avail_mem() -> int:
     return mem_free + swap_free
 
 def pids_of_prog(app_name: str) -> list:
-    "given an app name, return all pids associated with app"
-    pass
+    """
+    Given an app name, return all pids associated with app.
+    
+    Uses os.popen to call the 'pidof' command and returns
+    the output as a list of PID strings.
+    """
+    # Use os.popen to run the pidof command for the given app name
+    cmd = os.popen(f'pidof {app_name}')
+    # Read the output and strip whitespace
+    output = cmd.read().strip()
+    # Close the pipe
+    cmd.close()
+    # If pidof returns nothing, return an empty list
+    if not output:
+        return []
+    # Split the output string into a list of PID strings
+    return output.split()
 
 def rss_mem_of_pid(proc_id: str) -> int:
-    "given a process id, return the Resident memory used"
-    pass
+    """
+    Given a process id, return the Resident memory used.
+    
+    Opens /proc/<pid>/smaps and sums all Rss values.
+    """
+    total_rss = 0
+    # Open the smaps file for the given process ID
+    with open(f'/proc/{proc_id}/smaps', 'r') as f:
+        for line in f:
+            # Check if line starts with Rss
+            if line.startswith('Rss'):
+                # Add the numeric value to the total
+                total_rss += int(line.split()[1])
+    return total_rss
 
 def bytes_to_human_r(kibibytes: int, decimal_places: int=2) -> str:
     "turn 1,024 into 1 MiB, for example"
