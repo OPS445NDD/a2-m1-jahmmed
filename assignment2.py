@@ -25,7 +25,6 @@ def parse_command_args() -> object:
     "Set up argparse here. Call this function inside main."
     parser = argparse.ArgumentParser(description="Memory Visualiser -- See Memory Usage Report with bar charts",epilog="Copyright 2023")
     parser.add_argument("-l", "--length", type=int, default=20, help="Specify the length of the graph. Default is 20.")
-    # Create an entry for human-readable. Check the docs to make it a True/False option.
     parser.add_argument("program", type=str, nargs='?', help="if a program is specified, show memory use of all associated processes. Show only total use if not.")
     args = parser.parse_args()
     return args
@@ -49,8 +48,8 @@ def get_sys_mem() -> int:
     """
     Return total system memory in kB.
     
-    Opens /proc/meminfo, finds the MemTotal line, and returns
-    the numeric value as an integer.
+    Opens /proc/meminfo with explicit 'r' mode, finds the MemTotal line,
+    and returns the numeric value as an integer.
     """
     # Open the system memory info file in read mode
     with open('/proc/meminfo', 'r') as f:
@@ -66,7 +65,7 @@ def get_avail_mem() -> int:
     """
     Return total memory that is currently available in kB.
     
-    Opens /proc/meminfo and looks for MemAvailable.
+    Opens /proc/meminfo with explicit 'r' mode and looks for MemAvailable.
     If MemAvailable is missing (common on WSL), it falls back to
     MemFree + SwapFree.
     """
@@ -94,18 +93,15 @@ def get_avail_mem() -> int:
 
 def pids_of_prog(app_name: str) -> list:
     "given an app name, return all pids associated with app"
-    # please use os.popen('pidof <app>') to do this!
     pass
 
 def rss_mem_of_pid(proc_id: str) -> int:
     "given a process id, return the Resident memory used"
-    # for a process, open the smaps file and return the total of each
-    # Rss line.
     pass
 
 def bytes_to_human_r(kibibytes: int, decimal_places: int=2) -> str:
     "turn 1,024 into 1 MiB, for example"
-    suffixes = ['KiB', 'MiB', 'GiB', 'TiB', 'PiB']  # iB indicates 1024
+    suffixes = ['KiB', 'MiB', 'GiB', 'TiB', 'PiB']
     suf_count = 0
     result = kibibytes 
     while result > 1024 and suf_count < len(suffixes):
@@ -117,7 +113,7 @@ def bytes_to_human_r(kibibytes: int, decimal_places: int=2) -> str:
 
 if __name__ == "__main__":
     args = parse_command_args()
-    if not args.program:  # not program name is specified.
+    if not args.program:
         total = get_sys_mem()
         avail = get_avail_mem()
         used = total - avail
